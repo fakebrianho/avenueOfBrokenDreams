@@ -1,6 +1,7 @@
 /*------------------------------
 Globals
 ------------------------------*/
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const http = require("http");
@@ -24,13 +25,10 @@ const path = require("path");
 const fs = require("fs");
 const { resourceLimits } = require("worker_threads");
 const { docs } = require("googleapis/build/src/apis/docs");
-const CLIENT_ID =
-  "981183990874-7487a2vnmnromki0mmv0t3pvu761h7jv.apps.googleusercontent.com";
-const CLIENT_SECRET = "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";
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URL = "https://developers.google.com/oauthplayground";
-// 981183990874-7487a2vnmnromki0mmv0t3pvu761h7jv.apps.googleusercontent.com","project_id":"avenueofbrokendreams-331500","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["https://developers.google.com/oauthplayground"]}}
-const REFRESH_TOKEN =
-  "1//04uEL07qx8xP0CgYIARAAGAQSNwF-L9IrFdDVJrzXfCgQwv4W4kHN9jROheRfEDJW5qUfbE2ZGtahaxCvFN5drgyd4971CydsFhE";
+const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 const oauth2Client = new google.auth.OAuth2(
   CLIENT_ID,
   CLIENT_SECRET,
