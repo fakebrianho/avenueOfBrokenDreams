@@ -39522,7 +39522,146 @@ class OBJLoader extends _three.Loader {
 }
 
 exports.OBJLoader = OBJLoader;
-},{"three":"../../../node_modules/three/build/three.module.js"}],"js/index.js":[function(require,module,exports) {
+},{"three":"../../../node_modules/three/build/three.module.js"}],"../../../node_modules/three/examples/jsm/shaders/AfterimageShader.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.AfterimageShader = void 0;
+
+/**
+ * Afterimage shader
+ * I created this effect inspired by a demo on codepen:
+ * https://codepen.io/brunoimbrizi/pen/MoRJaN?page=1&
+ */
+const AfterimageShader = {
+  uniforms: {
+    'damp': {
+      value: 0.96
+    },
+    'tOld': {
+      value: null
+    },
+    'tNew': {
+      value: null
+    }
+  },
+  vertexShader:
+  /* glsl */
+  `
+
+		varying vec2 vUv;
+
+		void main() {
+
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+		}`,
+  fragmentShader:
+  /* glsl */
+  `
+
+		uniform float damp;
+
+		uniform sampler2D tOld;
+		uniform sampler2D tNew;
+
+		varying vec2 vUv;
+
+		vec4 when_gt( vec4 x, float y ) {
+
+			return max( sign( x - y ), 0.0 );
+
+		}
+
+		void main() {
+
+			vec4 texelOld = texture2D( tOld, vUv );
+			vec4 texelNew = texture2D( tNew, vUv );
+
+			texelOld *= damp * when_gt( texelOld, 0.1 );
+
+			gl_FragColor = max(texelNew, texelOld);
+
+		}`
+};
+exports.AfterimageShader = AfterimageShader;
+},{}],"../../../node_modules/three/examples/jsm/postprocessing/AfterimagePass.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.AfterimagePass = void 0;
+
+var _three = require("three");
+
+var _Pass = require("../postprocessing/Pass.js");
+
+var _AfterimageShader = require("../shaders/AfterimageShader.js");
+
+class AfterimagePass extends _Pass.Pass {
+  constructor(damp = 0.96) {
+    super();
+    if (_AfterimageShader.AfterimageShader === undefined) console.error('THREE.AfterimagePass relies on AfterimageShader');
+    this.shader = _AfterimageShader.AfterimageShader;
+    this.uniforms = _three.UniformsUtils.clone(this.shader.uniforms);
+    this.uniforms['damp'].value = damp;
+    this.textureComp = new _three.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
+      minFilter: _three.LinearFilter,
+      magFilter: _three.NearestFilter,
+      format: _three.RGBAFormat
+    });
+    this.textureOld = new _three.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
+      minFilter: _three.LinearFilter,
+      magFilter: _three.NearestFilter,
+      format: _three.RGBAFormat
+    });
+    this.shaderMaterial = new _three.ShaderMaterial({
+      uniforms: this.uniforms,
+      vertexShader: this.shader.vertexShader,
+      fragmentShader: this.shader.fragmentShader
+    });
+    this.compFsQuad = new _Pass.FullScreenQuad(this.shaderMaterial);
+    const material = new _three.MeshBasicMaterial();
+    this.copyFsQuad = new _Pass.FullScreenQuad(material);
+  }
+
+  render(renderer, writeBuffer, readBuffer
+  /*, deltaTime, maskActive*/
+  ) {
+    this.uniforms['tOld'].value = this.textureOld.texture;
+    this.uniforms['tNew'].value = readBuffer.texture;
+    renderer.setRenderTarget(this.textureComp);
+    this.compFsQuad.render(renderer);
+    this.copyFsQuad.material.map = this.textureComp.texture;
+
+    if (this.renderToScreen) {
+      renderer.setRenderTarget(null);
+      this.copyFsQuad.render(renderer);
+    } else {
+      renderer.setRenderTarget(writeBuffer);
+      if (this.clear) renderer.clear();
+      this.copyFsQuad.render(renderer);
+    } // Swap buffers.
+
+
+    const temp = this.textureOld;
+    this.textureOld = this.textureComp;
+    this.textureComp = temp; // Now textureOld contains the latest image, ready for the next frame.
+  }
+
+  setSize(width, height) {
+    this.textureComp.setSize(width, height);
+    this.textureOld.setSize(width, height);
+  }
+
+}
+
+exports.AfterimagePass = AfterimagePass;
+},{"three":"../../../node_modules/three/build/three.module.js","../postprocessing/Pass.js":"../../../node_modules/three/examples/jsm/postprocessing/Pass.js","../shaders/AfterimageShader.js":"../../../node_modules/three/examples/jsm/shaders/AfterimageShader.js"}],"js/index.js":[function(require,module,exports) {
 "use strict";
 
 var THREE = _interopRequireWildcard(require("three"));
@@ -39541,15 +39680,16 @@ var _MTLLoader = require("three/examples/jsm/loaders/MTLLoader.js");
 
 var _OBJLoader = require("three/examples/jsm/loaders/OBJLoader.js");
 
+var _AfterimagePass = require("three/examples/jsm/postprocessing/AfterimagePass.js");
+
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-// import { socket } from "socket.io";
-
 /*------------------------------
 Global Setup
 ------------------------------*/
+var afterImagePass;
 var linkData;
 var counter = 0;
 var canvas = document.querySelector("canvas.webgl");
@@ -39566,6 +39706,10 @@ var raycaster = new THREE.Raycaster();
 var pointer = new THREE.Vector2();
 var dummy = new THREE.Object3D();
 var sectionWidth = 1;
+/*------------------------------
+Start Animations
+------------------------------*/
+
 /*------------------------------
 3D Objects
 ------------------------------*/
@@ -39592,6 +39736,32 @@ new _MTLLoader.MTLLoader(manager).load("assets/Prunus_Pendula.mtl", function (ma
     scene.add(object);
   }, onProgress, onError);
 });
+/*------------------------------
+Shaders
+------------------------------*/
+// var testGeo = new THREE.PlaneBufferGeometry(2, 2);
+// let uniforms = {
+//   u_time: { type: "f", value: 1.0 },
+//   u_resolution: {
+//     type: "v2",
+//     value: new THREE.Vector2(),
+//   },
+//   u_mouse: { type: "v2", value: new THREE.Vector2() },
+// };
+// var testMaterial = new THREE.ShaderMaterial({
+//   uniforms: uniforms,
+//   vertexShader: document.getElementById("vertexShader").textContent,
+//   fragmentShader: document.getElementById("fragmentShader").textContent,
+// });
+// let mmesh = new THREE.Mesh(testGeo, testMaterial);
+// scene.add(mmesh);
+// document.onmousemove = function (e) {
+//   uniforms.u_mouse.value.x = e.pageX;
+//   uniforms.u_mouse.value.y = e.pageY;
+//   uniforms.u_resolution.value.x = renderer.domElement.width;
+//   uniforms.u_resolution.value.y = renderer.domElement.height;
+// };
+
 /*------------------------------
 Sockets
 ------------------------------*/
@@ -39698,6 +39868,9 @@ var bloomPass = new _UnrealBloomPass.UnrealBloomPass(new THREE.Vector2(window.in
 bloomPass.threshold = 0;
 bloomPass.strength = 0.6;
 var composer = new _EffectComposer.EffectComposer(renderer);
+afterImagePass = new _AfterimagePass.AfterimagePass();
+console.log(afterImagePass);
+composer.addPass(afterImagePass);
 composer.addPass(renderScene);
 composer.addPass(bloomPass);
 /*------------------------------
@@ -39723,6 +39896,12 @@ window.addEventListener("resize", function () {
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   /*------------------------------
+  Update Shaders
+  ------------------------------*/
+  // uniforms.u_resolution.value.x = renderer.domElement.width;
+  // uniforms.u_resolution.value.y = renderer.domElement.height;
+
+  /*------------------------------
   Update Post
   ------------------------------*/
 
@@ -39736,24 +39915,14 @@ Controls
 var controls = new _OrbitControls.OrbitControls(camera, canvas); // const controls = new DeviceOrientationControls(camera, true);
 
 controls.enableDamping = true;
-/*------------------------------
-Fullscreen Function
-------------------------------*/
-
-window.addEventListener("dblclick", function () {
-  if (!document.fullscreenElement) {
-    canvas.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
-});
 var clock = new THREE.Clock();
 
 var animate = function animate() {
   /*------------------------------
   Smooth Animation
   ------------------------------*/
-  var elapsedTime = clock.getElapsedTime();
+  var elapsedTime = clock.getElapsedTime(); // uniforms.u_time.value += clock.getDelta();
+
   /*------------------------------
   Update Controls
   ------------------------------*/
@@ -39762,8 +39931,8 @@ var animate = function animate() {
   /*------------------------------
   Update Meshes
   ------------------------------*/
-  // p.rotation.y = elapsedTime * 0.03;
-  // mesh.rotation.x = elapsedTime;
+
+  p.rotation.y = elapsedTime * 0.06; // mesh.rotation.x = elapsedTime;
   // mesh.rotation.y = elapsedTime;
   // mesh.rotation.y = device.angleY();
 
@@ -39781,7 +39950,7 @@ var animate = function animate() {
 };
 
 animate();
-},{"three":"../../../node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls.js":"../../../node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/postprocessing/RenderPass.js":"../../../node_modules/three/examples/jsm/postprocessing/RenderPass.js","three/examples/jsm/postprocessing/UnrealBloomPass.js":"../../../node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js","three/examples/jsm/postprocessing/EffectComposer.js":"../../../node_modules/three/examples/jsm/postprocessing/EffectComposer.js","three/examples/jsm/loaders/DDSLoader.js":"../../../node_modules/three/examples/jsm/loaders/DDSLoader.js","three/examples/jsm/loaders/MTLLoader.js":"../../../node_modules/three/examples/jsm/loaders/MTLLoader.js","three/examples/jsm/loaders/OBJLoader.js":"../../../node_modules/three/examples/jsm/loaders/OBJLoader.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"three":"../../../node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls.js":"../../../node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/postprocessing/RenderPass.js":"../../../node_modules/three/examples/jsm/postprocessing/RenderPass.js","three/examples/jsm/postprocessing/UnrealBloomPass.js":"../../../node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js","three/examples/jsm/postprocessing/EffectComposer.js":"../../../node_modules/three/examples/jsm/postprocessing/EffectComposer.js","three/examples/jsm/loaders/DDSLoader.js":"../../../node_modules/three/examples/jsm/loaders/DDSLoader.js","three/examples/jsm/loaders/MTLLoader.js":"../../../node_modules/three/examples/jsm/loaders/MTLLoader.js","three/examples/jsm/loaders/OBJLoader.js":"../../../node_modules/three/examples/jsm/loaders/OBJLoader.js","three/examples/jsm/postprocessing/AfterimagePass.js":"../../../node_modules/three/examples/jsm/postprocessing/AfterimagePass.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -39809,7 +39978,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60458" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51160" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

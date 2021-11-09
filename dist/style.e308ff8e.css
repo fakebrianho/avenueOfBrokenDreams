@@ -1,4 +1,228 @@
-body { margin: 0; }
+
+*,
+*::after,
+*::before {
+	box-sizing: border-box;
+}
+
+:root {
+	font-size: 14px;
+}
+
+body {
+  pointer-events: none;
+	margin: 0;
+	--color-text: #fff;
+	--color-bg: #000;
+	--color-link: #aaa;
+	--color-link-hover: #fff;
+	--anim-time: 18s;
+	--anim-delay-first: 1s;
+	--anim-delay-second: calc(var(--anim-delay-first) + var(--anim-time));
+	--anim-time-total: calc(var(--anim-time) + var(--anim-delay-first)/3 + var(--anim-delay-second));
+	--color-title: #fff;
+	color: var(--color-text);
+	background-color: var(--color-bg);
+	font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
+	background-size: cover;
+	background-position: 50% 50%;
+}
+
+canvas {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 100%;
+	height: 100%;
+}
+
+.hidden {
+	position: absolute;
+	overflow: hidden;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+
+
+@keyframes loaderAnim {
+	to {
+		opacity: 1;
+		transform: scale3d(0.5,0.5,1);
+	}
+}
+
+.button {
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	color: var(--color-link);
+	cursor: pointer;
+}
+
+.button--box {
+	pointer-events: auto;
+	background: var(--color-link);
+	color: var(--color-bg);
+	padding: 0.5rem 2rem;
+	font-family: inherit;
+	margin: 2rem;
+	border-radius: 1.25rem;
+	font-size: 1rem;
+}
+
+.button:hover,
+.button:focus {
+	outline: none;
+	color: var(--color-link-hover);
+}
+
+.button--box:hover,
+.button--box:focus {
+	background: var(--color-link);
+	color: var(--color-bg);
+}
+
+.start-anim .toggle {
+	pointer-events: auto;
+}
+
+.start-anim .button--box {
+	pointer-events: none;
+} 
+
+.content {
+	display: flex;
+	flex-direction: column;
+	padding: 0 1.5rem;
+	width: 100vw;
+	height: calc(100vh - 13rem);
+	position: relative;
+	justify-content: flex-start;
+	align-items: center;
+	position: relative;
+	z-index: 1200;
+	cursor: default;
+	text-transform: uppercase;
+	pointer-events: none;
+}
+
+.screen {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	background: var(--color-bg);
+	z-index: 1600;
+} 
+
+.screen--grid {
+	display: grid;
+	grid-template-columns: 100%;
+	grid-template-rows: 100%;
+	justify-items: center;
+	align-items: center;
+}
+
+.screen--flex {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+} 
+
+.start-anim .intro {
+	animation: fadeOut 8s var(--anim-time-total) linear forwards;
+}
+
+@keyframes fadeOut {
+	to {
+		opacity: 0;
+	}
+}
+
+.intro__content {
+	font-size: 4vw;
+	grid-area: 1 / 1 / 2 / 2;
+	text-align: center;
+	pointer-events: none;
+	margin: 0;
+	opacity: 0;
+}
+
+.intro__content-line {
+	display: block;
+	margin: 1rem 0;
+}
+
+.intro__content-line--small {
+	font-size: 1.5rem;
+}
+
+.no-js .intro {
+	display: none;
+}
+
+.start-anim .intro__content {
+	animation: fadeInOut var(--anim-time) var(--anim-delay-first) linear forwards;
+}
+
+.start-anim .intro__content:nth-child(2) {
+	animation-delay: var(--anim-delay-second);
+}
+
+@keyframes fadeInOut {
+	0% {
+		opacity: 0;
+	}
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		pointer-events: none;
+	}
+}
+
+.action__line {
+	margin: 1rem 0;
+	cursor: default;
+}
+
+.start-anim .action {
+	transition: opacity 0.6s;
+	opacity: 0;
+	pointer-events: none;
+}
+
+@media screen and (min-width: 53em) {
+	.frame {
+		position: absolute;
+		text-align: left;
+		top: 0;
+		left: 0;
+		width: 100%;
+		display: grid;
+		padding: 2.5rem 4rem;
+		grid-template-columns: auto 1fr auto auto auto;
+		align-content: space-between;
+		align-items: center;
+	}
+	
+	.content {
+		height: 100vh;
+		justify-content: flex-end;
+	}
+	.content__title {
+		font-size: 8.75vw;
+	}
+}
 
 
 /*# sourceMappingURL=/style.e308ff8e.css.map */

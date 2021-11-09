@@ -6,10 +6,12 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { DDSLoader } from "three/examples/jsm/loaders/DDSLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
-// import { socket } from "socket.io";
+import { AfterimagePass } from "three/examples/jsm/postprocessing/AfterimagePass.js";
+
 /*------------------------------
 Global Setup
 ------------------------------*/
+let afterImagePass;
 let linkData;
 let counter = 0;
 const canvas = document.querySelector("canvas.webgl");
@@ -24,6 +26,10 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 var dummy = new THREE.Object3D();
 var sectionWidth = 1;
+
+/*------------------------------
+Start Animations
+------------------------------*/
 
 /*------------------------------
 3D Objects
@@ -59,6 +65,34 @@ new MTLLoader(manager).load("assets/Prunus_Pendula.mtl", function (materials) {
   );
 });
 
+/*------------------------------
+Shaders
+------------------------------*/
+// var testGeo = new THREE.PlaneBufferGeometry(2, 2);
+
+// let uniforms = {
+//   u_time: { type: "f", value: 1.0 },
+//   u_resolution: {
+//     type: "v2",
+//     value: new THREE.Vector2(),
+//   },
+//   u_mouse: { type: "v2", value: new THREE.Vector2() },
+// };
+
+// var testMaterial = new THREE.ShaderMaterial({
+//   uniforms: uniforms,
+//   vertexShader: document.getElementById("vertexShader").textContent,
+//   fragmentShader: document.getElementById("fragmentShader").textContent,
+// });
+
+// let mmesh = new THREE.Mesh(testGeo, testMaterial);
+// scene.add(mmesh);
+// document.onmousemove = function (e) {
+//   uniforms.u_mouse.value.x = e.pageX;
+//   uniforms.u_mouse.value.y = e.pageY;
+//   uniforms.u_resolution.value.x = renderer.domElement.width;
+//   uniforms.u_resolution.value.y = renderer.domElement.height;
+// };
 /*------------------------------
 Sockets
 ------------------------------*/
@@ -169,6 +203,9 @@ const bloomPass = new UnrealBloomPass(
 bloomPass.threshold = 0;
 bloomPass.strength = 0.6;
 const composer = new EffectComposer(renderer);
+afterImagePass = new AfterimagePass();
+console.log(afterImagePass);
+composer.addPass(afterImagePass);
 composer.addPass(renderScene);
 composer.addPass(bloomPass);
 
@@ -192,6 +229,11 @@ window.addEventListener("resize", () => {
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   /*------------------------------
+  Update Shaders
+  ------------------------------*/
+  // uniforms.u_resolution.value.x = renderer.domElement.width;
+  // uniforms.u_resolution.value.y = renderer.domElement.height;
+  /*------------------------------
   Update Post
   ------------------------------*/
   composer.setSize(sizes.width, sizes.height);
@@ -205,23 +247,13 @@ const controls = new OrbitControls(camera, canvas);
 // const controls = new DeviceOrientationControls(camera, true);
 controls.enableDamping = true;
 
-/*------------------------------
-Fullscreen Function
-------------------------------*/
-window.addEventListener("dblclick", () => {
-  if (!document.fullscreenElement) {
-    canvas.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
-});
 const clock = new THREE.Clock();
 const animate = () => {
   /*------------------------------
   Smooth Animation
   ------------------------------*/
   const elapsedTime = clock.getElapsedTime();
-
+  // uniforms.u_time.value += clock.getDelta();
   /*------------------------------
   Update Controls
   ------------------------------*/
@@ -230,7 +262,7 @@ const animate = () => {
   /*------------------------------
   Update Meshes
   ------------------------------*/
-  // p.rotation.y = elapsedTime * 0.03;
+  p.rotation.y = elapsedTime * 0.06;
   // mesh.rotation.x = elapsedTime;
   // mesh.rotation.y = elapsedTime;
   // mesh.rotation.y = device.angleY();

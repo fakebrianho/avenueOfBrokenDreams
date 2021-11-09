@@ -10,10 +10,40 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <audio id='vo'>
+    <source src="dist/assets/vo2.mp3" type="audio/mpeg">
+  </audio>
+  <audio id='music'>
+    <source src="dist/assets/m3.mp3" type="audio/mpeg">
+  </audio>
+  <div class="screen screen--grid intro">
+    <p class="intro__content">
+      <span class="intro__content-line intro__content-line--small">In a moment you'll enter a place I call the Avenue of Broken Dreams.</span>
+    </p>
+    <p class="intro__content">
+      <span class="intro__content-line intro__content-line--small">Click and drag to move the camera, click on different elements to interact with them.</span>
+    </p>
+  </div>
+  <div class="screen screen--flex action">
+    <span class="action__line">Headphones Recommended</span>
+    <button id="play-btn" class="button button--box">Play</button>
+  </div>
   <canvas class="webgl"></canvas>  
+
+  <script>
+    const voAudio = document.getElementById('vo');
+    const musicAudio = document.getElementById('music');
+    playBtn = document.querySelector("#play-btn");
+    playBtn.addEventListener("click", () => {
+      document.body.classList.add("start-anim");
+      voAudio.play();
+      musicAudio.play();
+  });
+    musicAudio.onended = () =>{
+      document.body.style.pointerEvents = 'auto';
+    }
+  </script>
 </body>
+
 <script src="./js/index.js"></script>
-<!-- <script src='THREEx.DeviceOrientationState.js'></script> -->
-<!-- <script src='./js/orientation.js'></script> -->
-<!-- <script type='module' src="script.js"></script> -->
 </html>
